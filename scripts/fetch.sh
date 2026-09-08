@@ -28,8 +28,9 @@ clone_or_update() {
     fi
   else
     echo "==> fetch $name"
-    git -C "$dir" fetch --depth 1 origin "$ref"
-    git -C "$dir" checkout --detach "FETCH_HEAD"
+    git -C "$dir" fetch --depth 1 origin "refs/tags/$ref:refs/tags/$ref" 2>/dev/null \
+      || git -C "$dir" fetch --depth 1 origin "$ref"
+    git -C "$dir" checkout --detach FETCH_HEAD
   fi
   git -C "$dir" rev-parse HEAD
 }
@@ -57,4 +58,3 @@ sources:
 EOF
 
 echo "wrote $FETCHED"
-}
