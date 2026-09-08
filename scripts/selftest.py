@@ -10,8 +10,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from select_scope import select_files, write_scope  # noqa: E402
+from select_scope import (  # noqa: E402
+    enrich_catalog,
+    load_creators_csv,
+    load_work_info,
+    select_files,
+    write_scope,
+)
 from verify_lock import verify  # noqa: E402
+
+TESTDATA = Path(__file__).resolve().parent / "testdata"
 
 
 def main() -> int:
@@ -38,6 +46,10 @@ def main() -> int:
         assert ids == {"T0235", "T1578", "T1585"}, ids
         assert all(row["canon"] != "Y" for row in catalog)
 
+        work_info = load_work_info(TESTDATA / "work-info-T.snippet.json")
+        creators = load_creators_csv(TESTDATA / "creators-T.snippet.csv")
+        catalog = enrich_catalog(catalog, work_info, creators)
+
         out = dest / "scopes" / "taisho"
         manifest = write_scope(out, scope, catalog, "2026R2", ROOT / "NOTICE")
         assert manifest["work_count"] == 3
@@ -53,13 +65,16 @@ def main() -> int:
         assert "金剛" in t0235["title"], t0235
         assert "鳩摩羅什" in (t0235["author"] or ""), t0235
         assert t0235["work_type"] in work_types, t0235
+        assert t0235["work_type"] == "jing", t0235
         if "T1578" in by_id:
             assert "掌珍" in by_id["T1578"]["title"], by_id["T1578"]
             assert by_id["T1578"]["work_type"] in work_types, by_id["T1578"]
+            assert by_id["T1578"]["work_type"] == "lun", by_id["T1578"]
         if "T1585" in by_id:
             assert "成唯識" in by_id["T1585"]["title"], by_id["T1585"]
             assert "玄奘" in (by_id["T1585"]["author"] or ""), by_id["T1585"]
             assert by_id["T1585"]["work_type"] in work_types, by_id["T1585"]
+            assert by_id["T1585"]["work_type"] == "lun", by_id["T1585"]
         for row in rows:
             assert row["work_type"] in work_types, row
 
