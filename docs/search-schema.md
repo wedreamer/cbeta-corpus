@@ -1,6 +1,6 @@
 # Search schema (Tantivy)
 
-Contract between this repo's scoped catalog and `cbeta-mcp`.
+Contract between this repo's scoped catalog and [cbeta-cli](https://github.com/wedreamer/cbeta-cli).
 Index id: `{cbeta_tag}+{scope_hash}` (see README). Scope change always rebuilds.
 
 ## Engine choice
@@ -45,14 +45,14 @@ Sidecar (not Tantivy): optional `vectors.usearch`, `simhash64`.
 ## Query
 
 ```text
-search({ q, mode: keyword|phrase|fuzzy, filters, limit, offset })
+search({ q, mode: keyword|phrase|near|before|boolean|fuzzy|wildcard, filters, limit, offset })
 ```
 
 `fuzzy` = n-gram recall then RapidFuzz on top 200 `text_norm`.
-Return `doc_id, work_id, title, juan, line_id, text_raw, score, cbeta_tag`.
+Return `doc_id, work_id, title, juan, line_id, text_raw, citation, score, cbeta_tag`.
 
 ## Concurrency and artifacts
 
 - One writer; atomic rename `index/{tag}-{scope_hash}.tmp` → final.
-- Many mmap readers. HTTP MCP shares one `IndexReader`.
+- Many mmap readers. `cbeta serve` shares one `IndexReader`.
 - Artifact: `MANIFEST.json` + `catalog.sqlite` + `tantivy/` + `quote-hash.sqlite`.
