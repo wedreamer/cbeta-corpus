@@ -52,28 +52,31 @@ T/T31/T31n1585.xml   成唯識論
 git clone https://github.com/wedreamer/cbeta-corpus.git
 cd cbeta-corpus
 
+# 0. 离线自测（不拉全量 XML）
+pip install pyyaml
+python3 scripts/selftest.py
+
 # 1. 按 lockfile 拉取官方仓库的指定 tag（默认 2026R2）
 ./scripts/fetch.sh
 
-# 2. 按 scope 筛选经文并写出目录（稍后）
+# 2. 按 scope 筛选经文并写出目录
 python3 scripts/select_scope.py --scope scopes/taisho.yaml
 
-# 3. 校验 SHA / 文件数 / Category B（稍后）
-python3 scripts/verify_lock.py
+# 3. 校验 commit / Category B 排除
+python3 scripts/verify_lock.py --scope-name taisho
 ```
 
 数据默认落在 `~/.cbeta/corpus/<tag>/`，**不会进 git**。
 
-当前进度：[`scripts/fetch.sh`](scripts/fetch.sh) 已可用；`select_scope.py` 与 `verify_lock.py` 尚未落地。跟踪：[#1](https://github.com/wedreamer/cbeta-corpus/issues/1)。
+当前进度：`fetch.sh` / `select_scope.py` / `verify_lock.py` / `selftest.py` 已入仓。跟踪：[#1](https://github.com/wedreamer/cbeta-corpus/issues/1)。
 
 ## 目录结构
 
 ```text
 cbeta-corpus/
-  sources.lock.yaml          # 锁定官方 repo + tag + 预期 SHA
-  scripts/fetch.sh           # 按 lock 拉取，写 FETCHED.yaml
-  scopes/                    # 可选范围，改范围必须重建
-  fixtures/                  # 极小公开样例（仅 teiHeader 摘要）
+  sources.lock.yaml
+  scripts/fetch.sh select_scope.py verify_lock.py selftest.py
+  scopes/
   docs/
 ```
 
@@ -81,41 +84,28 @@ cbeta-corpus/
 
 ```text
 ~/.cbeta/corpus/2026R2/
-  FETCHED.yaml               # tag + 各源 commit
-  src/xml-p5/                # sparse checkout，默认 T/ X/
+  FETCHED.yaml
+  src/xml-p5/
   src/metadata/
   src/gaiji/
+  scopes/taisho/
+    MANIFEST.json catalog.jsonl files.txt NOTICE
 ```
 
 ## Scope 语义
-
-Scope 决定「这次构建纳入哪些经论」。常见预设：
 
 | 文件 | 范围 |
 |---|---|
 | `scopes/taisho.yaml` | 仅大正藏 T |
 | `scopes/taisho-xuzang.yaml` | 大正藏 T + 新纂卍续藏 X |
 | `scopes/cc-open.yaml` | 全部 CC BY-NC-SA 可用藏经（排除 Category B） |
-| `scopes/ci-minimal.yaml` | T0235 / T0945 / T1578 / T1585，给 CI 与解析测试 |
+| `scopes/ci-minimal.yaml` | T0235 / T0945 / T1578 / T1585 |
 
 改 scope 会改变 `scope_hash`，[cbeta-cli](https://github.com/wedreamer/cbeta-cli) 必须重建索引。
 
-过滤维度：`canons` / `works` / `categories` / `creators` / `dynasties` / `div_types` / `license`。
 `license: all` 才包含 Category B（Y / TX / LC / YP）。
 
 ## 交给 cbeta-cli 的接口
-
-`select_scope.py` 会写出：
-
-```text
-~/.cbeta/corpus/2026R2/scopes/taisho/
-  MANIFEST.json      # tag, scope_hash, work_count, license
-  catalog.jsonl      # title / author / dynasty / category / work_id
-  files.txt          # 相对 xml-p5 的文件列表
-  NOTICE             # 必须随产物走的版权声明
-```
-
-cbeta-cli 只读这个目录：
 
 ```bash
 cbeta build --scope taisho
@@ -125,7 +115,7 @@ cbeta search '真性有为空' --canon T
 ## 版权
 
 - **本仓库代码**：MIT（见 [LICENSE](LICENSE)）
-- **CBETA 经文数据**：默认 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)，限非营利使用；再发布必须附上 CBETA 说明与版本信息。详见 [NOTICE](NOTICE) 与 [https://cbeta.org/copyright](https://cbeta.org/copyright)
+- **CBETA 经文数据**：默认 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)，限非营利。见 [NOTICE](NOTICE) 与 [https://cbeta.org/copyright](https://cbeta.org/copyright)
 - **Category B**（Y / TX / LC / YP）**不是** CC，默认 scope 排除
 
 ## 相关
