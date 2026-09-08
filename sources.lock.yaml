@@ -1,0 +1,43 @@
+# Pinned official sources. Bump tag here when rebuilding a new product.
+# SHA fields should be filled by scripts/fetch.sh after a successful clone.
+schema: cbeta-corpus.lock/v1
+updated: 2026-09-08
+
+cbeta_release: "2026R2"
+
+sources:
+  xml-p5:
+    repo: https://github.com/cbeta-org/xml-p5.git
+    tag: "2026R2"
+    commit: null          # filled by fetch.sh
+    sparse: true          # clone with sparse-checkout of selected canons
+    required: true
+  metadata:
+    repo: https://github.com/DILA-edu/cbeta-metadata.git
+    ref: master
+    commit: null
+    required: true
+  gaiji:
+    repo: https://github.com/cbeta-org/cbeta_gaiji.git
+    ref: master
+    commit: null
+    required: true
+  documentation:
+    repo: https://github.com/DILA-edu/cbeta-documentation.git
+    ref: master
+    commit: null
+    required: false
+  bm_u8:
+    repo: https://github.com/cbeta-org/BM_u8.git
+    ref: master
+    commit: null
+    required: false
+    note: "Optional faster parse path. XML P5 remains the source of truth."
+
+license_policy:
+  default: cc-by-nc-sa-4.0
+  category_b_canons: [Y, TX, LC, YP]
+  category_b_default: exclude
+
+paths:
+  cache_root: "${CBETA_CORPUS_ROOT:-$HOME/.cbeta/corpus}"

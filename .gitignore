@@ -1,0 +1,26 @@
+# Local CBETA data (never commit the corpus)
+data/
+.corpus/
+*.xml
+!fixtures/**/*.xml
+
+# Generated catalogs and lock verification
+catalog/*.jsonl
+catalog/*.json
+.lock-cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+.venv/
+venv/
+*.pyc
+
+# Env
+.env
+.env.*
