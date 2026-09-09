@@ -19,15 +19,16 @@ clone_or_update() {
   local dir="$DEST/src/$name"
   mkdir -p "$DEST/src"
   if [[ ! -d "$dir/.git" ]]; then
-    echo "==> clone $name ($ref)"
+    echo "==> clone $name ($ref)" >&2
     if [[ "$sparse" == "true" && "$name" == "xml-p5" ]]; then
       git clone --filter=blob:none --sparse --branch "$ref" --depth 1 "$url" "$dir"
-      git -C "$dir" sparse-checkout set README.md canons.json schema T X
+      git -C "$dir" sparse-checkout init --no-cone
+      git -C "$dir" sparse-checkout set '/README.md' '/canons.json' '/schema' '/T' '/X'
     else
       git clone --branch "$ref" --depth 1 "$url" "$dir"
     fi
   else
-    echo "==> fetch $name"
+    echo "==> fetch $name" >&2
     git -C "$dir" fetch --depth 1 origin "refs/tags/$ref:refs/tags/$ref" 2>/dev/null \
       || git -C "$dir" fetch --depth 1 origin "$ref"
     git -C "$dir" checkout --detach FETCH_HEAD

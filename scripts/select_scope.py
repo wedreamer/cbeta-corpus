@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import os
@@ -10,6 +11,7 @@ import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Final
 
 try:
     import yaml
@@ -19,6 +21,8 @@ except ImportError as exc:  # pragma: no cover
 WORK_RE = re.compile(
     r"^(?P<canon>[A-Z]+)(?P<vol>\d+)n(?P<no>\d+)(?P<suf>[a-z]*)\.xml$"
 )
+
+DEFAULT_EXCLUDE_CANONS: Final = ("Y", "TX", "LC", "YP")
 
 
 def load_yaml(path: Path) -> dict:
@@ -38,9 +42,90 @@ def canon_of(work_id: str) -> str:
     return m.group(0) if m else ""
 
 
+def work_type_from_title(title: str | None) -> str:
+    if not title:
+        return "other"
+    if title.endswith("述記") or title.endswith("疏"):
+        return "shu"
+    if title.endswith("經"):
+        return "jing"
+    if title.endswith("論"):
+        return "lun"
+    if title.endswith("律"):
+        return "lv"
+    return "other"
+
+
+def load_work_info(path: Path) -> dict[str, dict]:
+    if not path.is_file():
+        return {}
+    with path.open(encoding="utf-8") as fh:
+        data = json.load(fh)
+    if not isinstance(data, dict):
+        return {}
+    return data
+
+
+def load_creators_csv(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    authors: dict[str, str] = {}
+    with path.open(encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            work_id = (row.get("work_id") or "").strip()
+            creators = (row.get("creators") or "").strip()
+            if work_id and creators:
+                authors[work_id] = creators
+    return authors
+
+
+def load_metadata(meta_root: Path, canons: set[str]) -> tuple[dict[str, dict], dict[str, str]]:
+    work_info: dict[str, dict] = {}
+    creators: dict[str, str] = {}
+    for canon in sorted(canons):
+        work_info.update(load_work_info(meta_root / "work-info" / f"{canon}.json"))
+        creators.update(load_creators_csv(meta_root / "creators" / "csv" / f"{canon}.csv"))
+    return work_info, creators
+
+
+def enrich_catalog(
+    catalog: list[dict],
+    work_info: dict[str, dict],
+    creators: dict[str, str],
+) -> list[dict]:
+    out: list[dict] = []
+    for row in catalog:
+        work_id = row["work_id"]
+        info = work_info.get(work_id) or {}
+        title = info.get("title")
+        if title is None:
+            title = row.get("title")
+        author = creators.get(work_id)
+        if author is None:
+            author = row.get("author")
+        dynasty = info.get("dynasty")
+        if dynasty is None:
+            dynasty = row.get("dynasty")
+        category = info.get("category")
+        if category is None:
+            category = row.get("category")
+        title_str = title if isinstance(title, str) else None
+        out.append(
+            {
+                **row,
+                "title": title,
+                "author": author,
+                "dynasty": dynasty,
+                "category": category,
+                "work_type": work_type_from_title(title_str),
+            }
+        )
+    return out
+
+
 def select_files(xml_root: Path, scope: dict) -> list[dict]:
     include_canons = set(scope.get("canons") or [])
-    exclude_canons = set(scope.get("exclude_canons") or ["Y", "TX", "LC", "YP"])
+    exclude_canons = set(scope.get("exclude_canons") or list(DEFAULT_EXCLUDE_CANONS))
     works = set(scope.get("works") or [])
     catalog = []
     for path in sorted(xml_root.rglob("*.xml")):
@@ -63,6 +148,7 @@ def select_files(xml_root: Path, scope: dict) -> list[dict]:
                 "author": None,
                 "dynasty": None,
                 "category": None,
+                "work_type": None,
             }
         )
     return catalog
@@ -80,7 +166,7 @@ def write_scope(out: Path, scope: dict, catalog: list[dict], tag: str, notice_sr
     with (out / "catalog.jsonl").open("w", encoding="utf-8") as fh:
         for row in catalog:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-    exclude_canons = set(scope.get("exclude_canons") or ["Y", "TX", "LC", "YP"])
+    exclude_canons = set(scope.get("exclude_canons") or list(DEFAULT_EXCLUDE_CANONS))
     manifest = {
         "cbeta_tag": tag,
         "scope": scope.get("name"),
@@ -120,6 +206,9 @@ def main() -> int:
         raise SystemExit(f"xml-p5 not fetched: {xml_root} (run scripts/fetch.sh)")
 
     catalog = select_files(xml_root, scope)
+    canons = {row["canon"] for row in catalog}
+    work_info, creators = load_metadata(dest / "src" / "metadata", canons)
+    catalog = enrich_catalog(catalog, work_info, creators)
     out = dest / "scopes" / scope.get("name", "unnamed")
     manifest = write_scope(out, scope, catalog, tag, repo / "NOTICE")
     print(f"wrote {out}  works={len(catalog)}  artifact={manifest['artifact_id']}")
