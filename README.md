@@ -48,6 +48,16 @@ T/T31/T31n1585.xml   成唯識論
 
 ## 快速开始
 
+**推荐（人用路径）**：在 [cbeta-cli](https://github.com/wedreamer/cbeta-cli) 里直接：
+
+```bash
+cbeta fetch --release 2026R2 --scope taisho
+cbeta use 2026R2 --scope taisho
+# 或 cbeta build --scope taisho
+```
+
+本仓库仍提供维护用脚本（开发 / CI / 无 cli 时）：
+
 ```bash
 git clone https://github.com/wedreamer/cbeta-corpus.git
 cd cbeta-corpus
@@ -56,7 +66,7 @@ cd cbeta-corpus
 pip install pyyaml
 python3 scripts/selftest.py
 
-# 1. 按 lockfile 拉取官方仓库的指定 tag（默认 2026R2）
+# 1. 按 lockfile 拉取（维护路径；日常请用 cbeta fetch）
 ./scripts/fetch.sh
 
 # 2. 按 scope 筛选经文并写出目录
@@ -68,7 +78,7 @@ python3 scripts/verify_lock.py --scope-name taisho
 
 数据默认落在 `~/.cbeta/corpus/<tag>/`，**不会进 git**。
 
-当前进度：`fetch.sh` / `select_scope.py` / `verify_lock.py` / `selftest.py` 已入仓。跟踪：[#1](https://github.com/wedreamer/cbeta-corpus/issues/1)。
+`sources.lock.yaml` 已钉死 2026R2：xml-p5 / metadata / gaiji 均为具体 commit（非 master）。跟踪：[#1](https://github.com/wedreamer/cbeta-corpus/issues/1)。
 
 ## 目录结构
 

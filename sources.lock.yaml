@@ -1,7 +1,7 @@
-# Pinned official sources. Bump tag here when rebuilding a new product.
-# SHA fields should be filled by scripts/fetch.sh after a successful clone.
+# Pinned official sources. Bump tag here when rebuilding a product release.
+# Humans: prefer `cbeta fetch --release 2026R2` (cbeta-cli) over scripts/fetch.sh.
 schema: cbeta-corpus.lock/v1
-updated: 2026-09-08
+updated: 2026-09-10
 
 cbeta_release: "2026R2"
 
@@ -9,18 +9,18 @@ sources:
   xml-p5:
     repo: https://github.com/cbeta-org/xml-p5.git
     tag: "2026R2"
-    commit: null          # filled by fetch.sh
-    sparse: true          # clone with sparse-checkout of selected canons
+    commit: dbdea41071e1e260ad84b72faefd4587333cf76d
+    sparse: true
     required: true
   metadata:
     repo: https://github.com/DILA-edu/cbeta-metadata.git
-    ref: master
-    commit: null
+    ref: af914b8d3ce6b7c929cbef5cef061e00bddda929
+    commit: af914b8d3ce6b7c929cbef5cef061e00bddda929
     required: true
   gaiji:
     repo: https://github.com/cbeta-org/cbeta_gaiji.git
-    ref: master
-    commit: null
+    ref: 30fb27a9fb7b8619d0f1c7a78c90c0a60108a067
+    commit: 30fb27a9fb7b8619d0f1c7a78c90c0a60108a067
     required: true
   documentation:
     repo: https://github.com/DILA-edu/cbeta-documentation.git
